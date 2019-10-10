@@ -18,7 +18,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 public class DatabaseClass extends SQLiteOpenHelper{
-    SQLiteDatabase database;
+    SQLiteDatabase database = this.getWritableDatabase();
 
     private static final String TABLE_NAME = "ACTIVITY_THREE";
     private static final String Item_db = "Item.db";
@@ -29,19 +29,17 @@ public class DatabaseClass extends SQLiteOpenHelper{
     private static final String KEY_ID = "id";
 
 
-    private static final String CREATE_TABLE = "CREATE TABLE ACTIVITY_THREE (Title String, Memo String);";
+
 
 
     public DatabaseClass(Context context){
         super(context, Item_db, null, 2);
-        database = getWritableDatabase();
     }
 
     @Override
     public void onCreate(SQLiteDatabase sqLiteDatabase) {
-       String createTable = (CREATE_TABLE);
-       sqLiteDatabase.execSQL(createTable);
-       Log.d("DATABASE", "Database is created");
+        sqLiteDatabase.execSQL( "CREATE TABLE ACTIVITY_THREE (Title Text, Memo Text);");
+        Log.d("DATABASE", "Database is created");
 
     }
 
@@ -60,6 +58,7 @@ public class DatabaseClass extends SQLiteOpenHelper{
         contentValues.put("Memo", items.getMemo());
 
         db.insert("ACTIVITY_THREE", null, contentValues);
+        Log.d("InsertItem", "inserted ");
 
         db.close();
     }
@@ -67,7 +66,7 @@ public class DatabaseClass extends SQLiteOpenHelper{
 
     public List<Items> getAllItems(){
         // Creating and opening a Readable SQLiteDatabase object
-        Log.d("WE AREW HERE", "getall item darabase class");
+        Log.d("darabase", "getallitem ");
 
         SQLiteDatabase db = this.getReadableDatabase();
 
@@ -81,17 +80,22 @@ public class DatabaseClass extends SQLiteOpenHelper{
         Log.d("WE AREW HERE", "Ran getallitem query");
 
         // Checking if the cursor's data is null
-        if(cursor!=null){
-            cursor.moveToFirst();
+        if(cursor!=null && cursor.getCount()>0 && cursor.moveToFirst()){
+            Log.d("Cursor", Integer.toString(cursor.getCount()));
+            Integer course_count = cursor.getCount();
+            for (int j = 0;j<course_count; j++ ){
+                Items items = new Items();
+                items.title = cursor.getString(0);
+                items.memo = cursor.getString(1);
+                itemList.add(items);
+                cursor.moveToNext();
+                Log.d("Cursor", "if passed");
+            }
+
+        }else {
+            Log.d("Cursor", "else");
+            itemList = null;
         }
-
-        do{
-            Items items = new Items();
-            items.title = cursor.getString(0);
-            items.memo = cursor.getString(1);
-            itemList.add(items);
-        }while(cursor.moveToNext());
-
         return itemList;
     }
 
@@ -103,14 +107,17 @@ public class DatabaseClass extends SQLiteOpenHelper{
         SQLiteDatabase db = this.getReadableDatabase();
 
 
-        String query = "SELECT * FROM ACTIVITY_THREE WHERE id = " + name + ";";
+        String query = "SELECT * FROM ACTIVITY_THREE WHERE rowid = " + name + ";";
+
+        Log.d("getItemID", query);
 
 
         Cursor item = db.rawQuery(query, null);
+
         if(item!=null && item.getCount()>0){
             item.moveToFirst();
-            item_id = item.getInt(item.getColumnIndex("id"));
-            Log.d("In getItemID and sucess", Integer.toString(item_id));
+            item_id = item.getInt(0);
+            Log.d("Database", "GetItemID");
         }else{
             Log.d("We are in getItemID", "Faild to get the id");
 
@@ -123,7 +130,7 @@ public class DatabaseClass extends SQLiteOpenHelper{
         SQLiteDatabase db = this.getReadableDatabase();
 
 
-        String query = "SELECT * FROM ACTIVITY_THREE WHERE id = " + id + ";";
+        String query = "SELECT * FROM ACTIVITY_THREE WHERE rowid = " + id + ";";
 
         Log.d("database calss", query);
 
@@ -133,9 +140,25 @@ public class DatabaseClass extends SQLiteOpenHelper{
             item.moveToFirst();
             Log.d("sucess item id is", id);
         }else{
-            Log.d("We are in getItemID", "Faild to get the id");
+            Log.d("We are in getItem", "Faild to id");
         }
         return item;
+
+    }
+
+    public void updateitem(String title, String memo, String id) {
+
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        String titleUpdate = "UPDATE ACTIVITY_THREE SET Title = '"+title+"' WHERE rowid = '"+id+"' ;"  ;
+        String memoUpdate = "UPDATE ACTIVITY_THREE SET Memo = '"+memo+"' WHERE rowid = '"+id+"' ;"  ;
+
+        Log.d("Updateitem", "Updateing"+titleUpdate);
+        Log.d("Updateitem", "Updateing"+memoUpdate);
+        db.execSQL(titleUpdate);
+        db.execSQL(memoUpdate);
+        db.close();
+
 
     }
 
